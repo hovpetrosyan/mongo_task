@@ -23,7 +23,8 @@ db.once('open',function(){
 const userScheme = new Schema({
 	name:String,
 	age:Number,
-	gender:String
+	gender:String,
+	tasks:[String]
 });
 
 const taskScheme = new Schema({
@@ -39,7 +40,8 @@ userScheme.statics.insertUser = function(user){
 	let item = new User({
 			name:user.name,
 			age:user.age,
-			gender:user.gender
+			gender:user.gender,
+			tasks:user.tasks
 		});
 		item.save().then(() => {
 			this.find().then(console.log('ok'))
@@ -75,7 +77,8 @@ taskScheme.statics.addTask = function(task){
 		text:task.text,
 		completed:task.completed,
 		created:task.created,
-		updated:task.updated	
+		updated:task.updated,
+		tasks:task.tasks	
 	});
 	tk.save().then((data) => {console.log(data);});
 	this.find().then(console.log);
@@ -94,13 +97,30 @@ taskScheme.statics.deleteAllCompleted = function(){
 	
 }
 
-taskScheme.statics.allIncompleteTasksorted = function(){
-	this.find({completed:false}).sort({created:-1}).then((data)=>{console.log(data);});
+userScheme.statics.allInCompleteTaskSort = function(user_id){
+	this.findOne({_id:user_id},function(err,user){
+		console.log('user',user);
+		console.log(user.tasks);
+		let tasks_arr_ = [];
+		for(i=0;i<user.tasks.length;i++){
+				console.log(user.tasks[i]);
+				let count = 0;
+				Task.findOne({_id:user.tasks[i],completed:false},function(err,task){
+					count++;
+					tasks_arr_.push(task);
+					if(count == tasks_arr_.length-1){
+						console.log(tasks_arr_.sort());
+					}
+					
+				});
+		}
+		
+	});
 }
 const User = mongoose.model('User',userScheme);
 const Task = mongoose.model('Task',taskScheme);
 //exampe of inserting
-//User.insertUser({name:"Ani",age:'20',gender:'female'});
+//User.insertUser({name:"George",age:'28',gender:'male',tasks:['5b431ff6c0c2a80098d1c409','5b431c755b22b71b90abbedb','5b431f7147afde09d424a777']});
 //User.insertUser({name:"Anna",age:'22',gender:'female'});
 
 //example of updating
@@ -132,3 +152,6 @@ Task.addTask({
 //it sorts all incomplete tasks by date
 //Task.allIncompleteTasksorted();
 
+
+//here we need user id,,,and then our allInCompleteTaskSort function will find user by id,then user's tasks,after that by id of the task it will push task objects into array and then sort them
+//User.allInCompleteTaskSort('5b434cc959b30b1ee0ac076a');
